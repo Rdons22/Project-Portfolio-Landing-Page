@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const TEST_CASES = [
@@ -17,6 +17,7 @@ const ACCENT = "#FF5A3D";
 const BLUE = "#4C7DFF";
 const GREEN = "#19A974";
 const VIOLET = "#8B5CF6";
+const RED = "#E11D48";
 
 function ArrowIcon({ className = "" }) {
   return (
@@ -40,107 +41,401 @@ function FadeIn({ children, delay = 0, className = "" }) {
   );
 }
 
-function ProjectIndexPreview({ compact = false }) {
-  const projects = useMemo(
-    () => [
-      { code: "01", title: "AI Audit Toolkit", tag: "Accounting AI", color: ACCENT, x: "12%", y: "18%", size: 92 },
-      { code: "02", title: "IFRS RAG Knowledge Base", tag: "Retrieval", color: BLUE, x: "39%", y: "24%", size: 126 },
-      { code: "03", title: "GL Reconciliation Engine", tag: "Data Workflow", color: GREEN, x: "67%", y: "18%", size: 86 },
-      { code: "04", title: "AI Task OS Extension", tag: "Product Experiment", color: VIOLET, x: "20%", y: "62%", size: 76 },
-      { code: "05", title: "CPA Firm AI Concept", tag: "Strategy Prototype", color: ACCENT, x: "62%", y: "58%", size: 108 },
-    ],
-    []
+function NavLink({ href, label, color, onClick }) {
+  return (
+    <motion.a
+      href={href}
+      onClick={onClick}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      className="relative inline-block no-underline"
+    >
+      <span className="relative block overflow-hidden" style={{ height: "1.4em", lineHeight: "1.4em" }}>
+        <motion.span
+          className="block leading-[1.4em]"
+          variants={{ rest: { y: "0%" }, hover: { y: "-100%" } }}
+          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {label}
+        </motion.span>
+        <motion.span
+          className="block leading-[1.4em]"
+          style={{ color }}
+          variants={{ rest: { y: "0%" }, hover: { y: "-100%" } }}
+          transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {label}
+        </motion.span>
+      </span>
+      <motion.span
+        className="pointer-events-none absolute left-0 right-0 block h-px"
+        style={{ backgroundColor: color, bottom: "-5px", transformOrigin: "center" }}
+        variants={{ rest: { scaleX: 0, opacity: 0 }, hover: { scaleX: 1, opacity: 1 } }}
+        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <motion.span
+        className="pointer-events-none absolute -left-3 top-1/2 block h-1 w-1 -translate-y-1/2 rounded-full"
+        style={{ backgroundColor: color }}
+        variants={{ rest: { scale: 0, opacity: 0 }, hover: { scale: 1, opacity: 1 } }}
+        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+      />
+    </motion.a>
   );
+}
 
-  const [active, setActive] = useState(projects[1]);
-  const titleWords = active.title.split(" ");
-  const titleStart = titleWords.slice(0, -1).join(" ");
-  const titleEnd = titleWords[titleWords.length - 1];
+function NameMark({ onActivate }) {
+  const [bursts, setBursts] = useState([]);
+  const COLORS = [ACCENT, BLUE, GREEN, VIOLET, RED, "#111111"];
+  const letters = "Ryan Donaldson".split("");
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (onActivate) onActivate();
+    const id = Date.now() + Math.random();
+    const particles = Array.from({ length: 18 }, (_, i) => ({
+      i,
+      angle: (i / 18) * Math.PI * 2 + Math.random() * 0.5,
+      distance: 60 + Math.random() * 80,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      size: 4 + Math.random() * 6,
+      rot: (Math.random() - 0.5) * 360,
+    }));
+    setBursts((prev) => [...prev, { id, particles }]);
+    setTimeout(() => setBursts((prev) => prev.filter((b) => b.id !== id)), 950);
+  };
+
+  const containerVariants = {
+    rest: {},
+    hover: { transition: { staggerChildren: 0.035 } },
+  };
+  const letterVariants = {
+    rest: { y: 0, rotate: 0, color: undefined },
+    hover: {
+      y: [0, -4, 0],
+      rotate: [0, -8, 0],
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+  };
 
   return (
-    <div className={`relative overflow-hidden bg-[#fafafa] text-black ${compact ? "min-h-[430px]" : "h-screen"}`}>
-      <motion.div
-        className="absolute inset-0 opacity-[0.55]"
-        animate={{ backgroundPosition: ["0px 0px", "40px 40px"] }}
-        transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-        style={{
-          backgroundImage: "linear-gradient(rgba(0,0,0,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.055) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <motion.div
-        className="absolute inset-0"
-        animate={{ opacity: [0.75, 1, 0.75] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        style={{
-          background: `radial-gradient(circle at 28% 28%, ${active.color}24, transparent 30%), radial-gradient(circle at 72% 62%, rgba(76,125,255,0.12), transparent 26%)`,
-        }}
-      />
-
-      {projects.map((project, index) => {
-        const isActive = active.title === project.title;
-        return (
-          <motion.button
-            type="button"
-            key={project.title}
-            onMouseEnter={() => setActive(project)}
-            onFocus={() => setActive(project)}
-            className="absolute grid place-items-center border bg-white/60 text-left backdrop-blur-xl transition focus:outline-none"
-            style={{
-              left: project.x,
-              top: project.y,
-              width: project.size,
-              height: project.size,
-              borderColor: isActive ? project.color : "rgba(0,0,0,0.11)",
-            }}
-            animate={{
-              scale: isActive ? 1.12 : 1,
-              y: isActive ? -10 : [0, index % 2 ? -6 : 6, 0],
-              boxShadow: isActive ? `0 28px 80px ${project.color}22` : "0 18px 60px rgba(0,0,0,0.06)",
-            }}
-            transition={{ duration: isActive ? 0.35 : 5 + index * 0.35, repeat: isActive ? 0 : Infinity, ease: "easeInOut" }}
+    <motion.a
+      href="#top"
+      onClick={handleClick}
+      initial="rest"
+      animate="rest"
+      whileHover="hover"
+      variants={containerVariants}
+      className="relative font-mono text-[10px] uppercase tracking-[0.28em] text-black/55 no-underline transition hover:text-black"
+      aria-label="Ryan Donaldson — back to top"
+    >
+      <span className="relative inline-flex">
+        {letters.map((ch, i) => (
+          <motion.span
+            key={i}
+            variants={letterVariants}
+            className={`inline-block ${i >= 5 ? "text-[#FF5A3D]" : ""}`}
           >
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em]" style={{ color: project.color }}>
-              {project.code}
-            </span>
-          </motion.button>
-        );
-      })}
+            {ch === " " ? " " : ch}
+          </motion.span>
+        ))}
+      </span>
 
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
-        <motion.div
-          key={active.title}
-          initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-xl rounded-[2rem] border border-black/10 bg-white/72 p-6 text-center shadow-[0_30px_120px_rgba(0,0,0,0.10)] backdrop-blur-2xl"
-        >
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-black/35">Interactive Project Index</p>
-          <h3 className="mt-5 text-4xl font-light leading-[1.02] tracking-[-0.07em] md:text-6xl">
-            {titleStart} <span style={{ color: active.color }}>{titleEnd}</span>
-          </h3>
-          <p className="mx-auto mt-5 max-w-sm font-mono text-[10px] uppercase tracking-[0.2em] text-black/40">{active.tag}</p>
-        </motion.div>
-      </div>
+      <span className="pointer-events-none absolute left-1/2 top-1/2">
+        <AnimatePresence>
+          {bursts.map((b) =>
+            b.particles.map((p) => (
+              <motion.span
+                key={`${b.id}-${p.i}`}
+                className="absolute block rounded-full"
+                style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 0.6, rotate: 0 }}
+                animate={{
+                  x: Math.cos(p.angle) * p.distance,
+                  y: Math.sin(p.angle) * p.distance,
+                  opacity: 0,
+                  scale: 0.4,
+                  rotate: p.rot,
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              />
+            ))
+          )}
+        </AnimatePresence>
+      </span>
+    </motion.a>
+  );
+}
 
-      <div className="absolute bottom-0 left-0 right-0 border-t border-black/10 bg-white/70 px-6 py-4 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-black/35">Hover the tiles</p>
-          <div className="flex flex-wrap gap-2">
-            {projects.map((project) => (
-              <button
-                type="button"
-                key={project.code}
-                onMouseEnter={() => setActive(project)}
-                onFocus={() => setActive(project)}
-                className="rounded-full border border-black/10 bg-white px-3 py-2 font-mono text-[9px] uppercase tracking-[0.16em] text-black/45 transition hover:text-black"
-              >
-                <span style={{ color: project.color }}>{project.code}</span> / {project.title.split(" ")[0]}
-              </button>
-            ))}
+const AUDIT_SAMPLES = [
+  {
+    id: "invoice",
+    label: "Invoice line",
+    raw: "Office supplies · $1,240.00 · Vendor: Acme · Date: 2025-03-12",
+    parse: ["type: expense", "amount: 1,240.00", "vendor: Acme", "date: 2025-03-12"],
+    classify: { label: "OPEX · Office expenses", color: BLUE },
+    ifrs: { ref: "IAS 16", note: "Below capitalization threshold — expensed to P&L" },
+    flag: { tone: "ok", text: "No anomalies · matches Q1 vendor pattern", color: GREEN },
+    verdict: { confidence: 96, action: "Auto-post to GL", color: GREEN },
+  },
+  {
+    id: "payroll",
+    label: "Payroll entry",
+    raw: "Salary · $48,000.00 · Employee #042 · Dept: Engineering · Date: 2025-03-31",
+    parse: ["type: salary", "amount: 48,000.00", "dept: Engineering", "period: 2025-03"],
+    classify: { label: "OPEX · Personnel · Engineering", color: VIOLET },
+    ifrs: { ref: "IAS 19", note: "Short-term employee benefits · monthly accrual" },
+    flag: { tone: "warn", text: "2.1× department average — review recommended", color: ACCENT },
+    verdict: { confidence: 78, action: "Hold for review", color: ACCENT },
+  },
+  {
+    id: "revenue",
+    label: "Revenue accrual",
+    raw: "Service revenue · $215,000.00 · Customer: Northwind · Date: 2025-03-31",
+    parse: ["type: revenue", "amount: 215,000.00", "customer: Northwind", "period: Q1-2025"],
+    classify: { label: "Revenue · Services rendered", color: GREEN },
+    ifrs: { ref: "IFRS 15", note: "Performance obligation NOT satisfied · contract unsigned" },
+    flag: { tone: "error", text: "Critical · service not delivered, contract unsigned — recognition violates IFRS 15", color: RED },
+    verdict: { confidence: 18, action: "Block · escalate to controller", color: RED },
+  },
+];
+
+function ProjectIndexPreview({ compact = false }) {
+  const [active, setActive] = useState(AUDIT_SAMPLES[0]);
+  const [input, setInput] = useState(AUDIT_SAMPLES[0].raw);
+  const [step, setStep] = useState(0);
+
+  const run = (sample) => {
+    setActive(sample);
+    setInput(sample.raw);
+    setStep(0);
+    let s = 0;
+    const tick = () => {
+      s += 1;
+      setStep(s);
+      if (s < 5) setTimeout(tick, 650);
+    };
+    setTimeout(tick, 280);
+  };
+
+  useEffect(() => {
+    const t = setTimeout(() => run(AUDIT_SAMPLES[0]), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  const stages = [
+    { code: "01", label: "Parse", color: "#111111" },
+    { code: "02", label: "Classify", color: active.classify.color },
+    { code: "03", label: "Retrieve · IFRS", color: BLUE },
+    { code: "04", label: "Flag", color: active.flag.color },
+  ];
+
+  return (
+    <div className={`relative overflow-hidden bg-[#fafafa] text-black ${compact ? "" : "min-h-screen"}`}>
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.55]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.045) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+        }}
+      />
+
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 18% 18%, ${active.classify.color}14, transparent 32%), radial-gradient(circle at 82% 78%, ${active.flag.color}10, transparent 32%)`,
+        }}
+      />
+
+      <div className="relative px-6 py-14 md:px-10 md:py-20">
+        <div className="mb-10 max-w-3xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-black/40">Try it · Live demo</p>
+          <h2 className="mt-5 text-4xl font-light leading-[1.04] tracking-[-0.07em] md:text-6xl">
+            Drop a journal entry. Watch it get <span style={{ color: BLUE }}>audited</span>.
+          </h2>
+          <p className="mt-5 max-w-xl text-sm font-light leading-7 text-black/55">
+            A toy version of one of the systems below — pick a sample, run the pipeline, and see the model classify it, look up the IFRS reference, and flag any anomalies.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] lg:col-span-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-black/40">Input</p>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              rows={4}
+              spellCheck={false}
+              className="mt-4 w-full resize-none rounded-xl border border-black/10 bg-[#fafafa] p-4 font-mono text-sm leading-6 text-black/80 outline-none transition focus:border-black/30"
+              placeholder="Office supplies · $1,240.00 · Vendor: …"
+            />
+
+            <p className="mt-5 font-mono text-[9px] uppercase tracking-[0.24em] text-black/35">Try one</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {AUDIT_SAMPLES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => run(s)}
+                  className={`rounded-full border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition ${
+                    active.id === s.id
+                      ? "border-black text-black"
+                      : "border-black/10 text-black/50 hover:text-black"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+          </div>
+
+          <div className="relative rounded-2xl border border-black/10 bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] lg:col-span-7">
+            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-black/40">Pipeline</p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+              {stages.map((stage, i) => {
+                const reached = step > i;
+                const isCurrent = step === i + 1;
+                return (
+                  <div key={stage.code}>
+                    <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em]">
+                      <span style={{ color: reached ? stage.color : "rgba(0,0,0,0.2)" }}>{stage.code}</span>
+                      <span className={reached ? "text-black/70" : "text-black/30"}>{stage.label}</span>
+                    </div>
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-black/[0.06]">
+                      <motion.div
+                        className="h-full"
+                        style={{ backgroundColor: stage.color }}
+                        initial={{ width: "0%" }}
+                        animate={{ width: reached ? "100%" : isCurrent ? "55%" : "0%" }}
+                        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <AnimatePresence>
+                {step >= 1 && (
+                  <motion.div
+                    key={`parse-${active.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="rounded-xl border border-black/10 bg-[#fafafa] p-4"
+                  >
+                    <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-black/35">Parse</p>
+                    <div className="mt-2 grid grid-cols-1 gap-1 font-mono text-[11px] leading-5 text-black/65 sm:grid-cols-2">
+                      {active.parse.map((line) => (
+                        <div key={line}>{line}</div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {step >= 2 && (
+                  <motion.div
+                    key={`classify-${active.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="flex items-center justify-between rounded-xl border border-black/10 bg-white p-4"
+                  >
+                    <div>
+                      <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-black/35">Classify</p>
+                      <p className="mt-1 text-base font-light tracking-[-0.02em]">{active.classify.label}</p>
+                    </div>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: active.classify.color }} />
+                  </motion.div>
+                )}
+
+                {step >= 3 && (
+                  <motion.div
+                    key={`ifrs-${active.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="rounded-xl border border-black/10 bg-white p-4"
+                  >
+                    <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-black/35">Retrieve · IFRS</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span
+                        className="rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em]"
+                        style={{ borderColor: BLUE, color: BLUE }}
+                      >
+                        {active.ifrs.ref}
+                      </span>
+                      <span className="text-sm font-light text-black/65">{active.ifrs.note}</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {step >= 4 && (
+                  <motion.div
+                    key={`flag-${active.id}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="flex items-center justify-between rounded-xl border p-4"
+                    style={{ borderColor: `${active.flag.color}33`, backgroundColor: `${active.flag.color}0d` }}
+                  >
+                    <div>
+                      <p className="font-mono text-[9px] uppercase tracking-[0.24em]" style={{ color: active.flag.color }}>
+                        Flag
+                      </p>
+                      <p className="mt-1 text-sm font-light tracking-[-0.02em] text-black/80">{active.flag.text}</p>
+                    </div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em]" style={{ color: active.flag.color }}>
+                      {active.flag.tone === "ok" ? "✓ Pass" : active.flag.tone === "warn" ? "⚠ Review" : "✗ Critical"}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
+
+        <AnimatePresence>
+          {step >= 5 && (
+            <motion.div
+              key={`verdict-${active.id}`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-4 overflow-hidden rounded-2xl border border-black/10 bg-black px-6 py-5 text-white shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+              style={{ borderTop: `3px solid ${active.verdict.color}` }}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-6">
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.28em] text-white/40">Verdict</p>
+                  <p className="mt-1 text-2xl font-light tracking-[-0.03em]">{active.verdict.action}</p>
+                </div>
+                <div className="flex items-center gap-8">
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-white/40">Confidence</p>
+                    <p className="mt-1 font-mono text-2xl tabular-nums" style={{ color: active.verdict.color }}>
+                      {active.verdict.confidence}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-white/40">Reference</p>
+                    <p className="mt-1 font-mono text-sm">{active.ifrs.ref}</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -329,7 +624,7 @@ function IntroGate({ onEnter }) {
   };
 
   return (
-    <motion.section className="fixed inset-0 z-[100] bg-white text-black" exit={{ opacity: 0 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
+    <motion.section className="fixed inset-0 z-[100] bg-white text-black" exit={{ opacity: 0, scale: 1.015, filter: "blur(6px)" }} transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}>
       <AnimatePresence mode="wait">
         {!starting ? (
           <motion.div
@@ -529,19 +824,48 @@ function WorkGrid() {
 export default function RyanDonaldsonProjectPortfolio() {
   const [entered, setEntered] = useState(false);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToId = (id) => (e) => {
+    if (e) e.preventDefault();
+    const el = document.getElementById(id);
+    if (!el) return;
+    const headerH = 80;
+    const sectionPad = parseFloat(window.getComputedStyle(el).paddingTop) || 0;
+    const innerPad = el.firstElementChild
+      ? parseFloat(window.getComputedStyle(el.firstElementChild).paddingTop) || 0
+      : 0;
+    const target = el.getBoundingClientRect().top + window.scrollY + sectionPad + innerPad - headerH;
+    window.scrollTo({ top: target, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (!entered) return;
+    const onKey = (e) => {
+      if (e.key !== "Enter") return;
+      const t = e.target;
+      const tag = (t?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || t?.isContentEditable) return;
+      e.preventDefault();
+      scrollToTop();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [entered]);
+
   return (
     <main className="min-h-screen bg-white font-sans text-black selection:bg-black selection:text-white">
       <AnimatePresence>{!entered && <IntroGate onEnter={() => setEntered(true)} />}</AnimatePresence>
 
       <header className="fixed left-0 right-0 top-0 z-40 bg-white/80 backdrop-blur-xl">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 md:px-10">
-          <a href="#top" className="font-mono text-[10px] uppercase tracking-[0.28em] text-black/55 no-underline transition hover:text-black">
-            Ryan <span className="text-[#FF5A3D]">Donaldson</span>
-          </a>
-          <div className="hidden items-center gap-8 font-mono text-[10px] uppercase tracking-[0.2em] text-black/35 md:flex">
-            <a href="#projects" className="transition hover:text-[#FF5A3D]">Projects</a>
-            <a href="#about" className="transition hover:text-[#4C7DFF]">Index</a>
-            <a href="#contact" className="transition hover:text-[#19A974]">Contact</a>
+          <NameMark onActivate={scrollToTop} />
+          <div className="hidden items-center gap-10 font-mono text-[10px] uppercase tracking-[0.2em] text-black/35 md:flex">
+            <NavLink href="#projects" label="Projects" color={ACCENT} onClick={scrollToId("projects")} />
+            <NavLink href="#about" label="Index" color={BLUE} onClick={scrollToId("about")} />
+            <NavLink href="#contact" label="Contact" color={GREEN} onClick={scrollToId("contact")} />
           </div>
         </nav>
       </header>
