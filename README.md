@@ -2,6 +2,10 @@
 
 This is my professional portfolio showcasing my web development projects and skills.
 
-## View Live Portfolio
+## Live Preview
 
-[Open the live portfolio](https://rdons22.github.io/Project-Portfolio-Landing-Page/)
+[View the live portfolio on GitHub Pages](https://rdons22.github.io/Project-Portfolio-Landing-Page/)
+
+## Local Preview
+
+Open `preview-standalone.html` in a browser to preview the built site locally without needing Node.js installed.
